@@ -1,8 +1,9 @@
 const express = require("express");
-const session = require("express-session");
+const SpotifyWebApi = require("spotify-web-api-node");
 const app = express();
 const router = express.Router();
-const SpotifyWebApi = require("spotify-web-api-node");
+const LocalStorage = require("node-localstorage").LocalStorage;
+let localStorage = new LocalStorage("./scratch");
 require("dotenv").config();
 
 const spotifyApi = new SpotifyWebApi({
@@ -10,8 +11,6 @@ const spotifyApi = new SpotifyWebApi({
 	clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
 	redirectUri: process.env.SPOTIFY_LOCAL_SERVER + "/callback",
 });
-
-let token = process.env.SPOTIFY_USER_TOKEN;
 
 router.get("/", function (require, response, next) {
 	response.redirect(
@@ -29,29 +28,29 @@ router.get("/", function (require, response, next) {
 router.get("/callback", function (require, response, next) {
 	spotifyApi.authorizationCodeGrant(require.query.code).then((res) => {
 		response.send(JSON.stringify(res));
+		localStorage.setItem("accessToken", res.body.access_token);
 	});
 });
-spotifyApi.setAccessToken(token);
+spotifyApi.setAccessToken(localStorage.getItem("accessToken"));
 
-const getMe = () => {
-	spotifyApi.getMe().then(
-		function (data) {
-			console.log(data.body);
-		},
-		function (err) {
-			console.log("Something went wrong!", err);
-		},
-	);
+const getMyRecentlyPlayedTracks = () => {
+	spotifyApi
+		.getMyRecentlyPlayedTracks({
+			limit: 20,
+		})
+		.then(
+			function (data) {
+				// Output items
+				console.log("Your 20 most recently played tracks are:");
+				data.body.items.forEach((item) => console.log(item.track));
+			},
+			function (err) {
+				console.log("Something went wrong!", err);
+			},
+		);
 };
 
-getMe();
-
-// const getPlaylist = async () => {
-// 	const data = await spotifyApi.getUserPlaylists("12159103962");
-// 	console.log("data", data);
-// };
-
-// getPlaylist();
+getMyRecentlyPlayedTracks();
 
 app.use("/", router);
 app.listen(process.env.SPOTIFY_LOCAL_PORT, function () {
