@@ -1,4 +1,5 @@
 const express = require("express");
+const session = require("express-session");
 const app = express();
 const router = express.Router();
 const SpotifyWebApi = require("spotify-web-api-node");
@@ -25,23 +26,17 @@ router.get("/", function (require, response, next) {
 	);
 });
 
-// router.get("/callback", function (require, response, next) {
-// 	console.log("require", require.query);
-// 	const code = require.query.code;
-// 	spotifyApi.authorizationCodeGrant(require.query.code).then((res) => {
-// 		response.send(JSON.stringify(res));
-// 		spotifyApi.setAccessToken(token);
-// 	});
-// });
+router.get("/callback", function (require, response, next) {
+	spotifyApi.authorizationCodeGrant(require.query.code).then((res) => {
+		response.send(JSON.stringify(res));
+	});
+});
 spotifyApi.setAccessToken(token);
 
 const getMe = () => {
 	spotifyApi.getMe().then(
 		function (data) {
-			console.log(
-				"Some information about the authenticated user",
-				data.body,
-			);
+			console.log(data.body);
 		},
 		function (err) {
 			console.log("Something went wrong!", err);
@@ -50,6 +45,13 @@ const getMe = () => {
 };
 
 getMe();
+
+// const getPlaylist = async () => {
+// 	const data = await spotifyApi.getUserPlaylists("12159103962");
+// 	console.log("data", data);
+// };
+
+// getPlaylist();
 
 app.use("/", router);
 app.listen(process.env.SPOTIFY_LOCAL_PORT, function () {
