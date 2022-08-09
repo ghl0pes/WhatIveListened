@@ -34,20 +34,28 @@ router.get("/callback", function (require, response, next) {
 spotifyApi.setAccessToken(localStorage.getItem("accessToken"));
 
 const getMyRecentlyPlayedTracks = () => {
-	spotifyApi
-		.getMyRecentlyPlayedTracks({
-			limit: 20,
-		})
-		.then(
-			function (data) {
-				// Output items
-				console.log("Your 20 most recently played tracks are:");
-				data.body.items.forEach((item) => console.log(item.track));
-			},
-			function (err) {
-				console.log("Something went wrong!", err);
-			},
-		);
+	spotifyApi.getMyRecentlyPlayedTracks({ limit: 50 }).then(
+		function (data) {
+			let albums = data.body.items
+				.filter((current) => {
+					if (current.context.type === "album") {
+						current.context.album = current.track.album;
+						return current;
+					}
+				})
+				.map((element) => element.context);
+
+			let recent = [];
+			albums.forEach((element, index) => {
+				if (index === 0 || albums[index].uri != albums[index - 1].uri) {
+					recent.push(element);
+				}
+			});
+		},
+		function (err) {
+			app.call();
+		},
+	);
 };
 
 getMyRecentlyPlayedTracks();
