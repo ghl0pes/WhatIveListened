@@ -45,16 +45,16 @@ const getMyRecentlyPlayedTracks = () => {
 				})
 				.map((element) => element.context);
 
-			let recent = [];
+			let recentAlbums = [];
 			albums.forEach((element, index) => {
 				if (index === 0 || albums[index].uri != albums[index - 1].uri) {
-					recent.push(element);
+					recentAlbums.push(element);
 				}
 			});
+
+			console.log(recentAlbums);
 		},
-		function (err) {
-			app.call();
-		},
+		function (err) {},
 	);
 };
 
